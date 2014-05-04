@@ -1,0 +1,56 @@
+/***** Table *****/
+#stock_table {
+  width: 100%;
+}
+
+#stock_table th {
+  text-align: center;
+  width: 10px;
+  cursor: pointer;
+}
+
+#stock_table th:hover {
+  color: #2BA6CB;
+  background: #DCDCDC; /* light gray */
+}
+
+.red td{
+  color: #FF0000; /* solid red */
+}
+
+.green td{
+  color: #32CD32; /* lime green */
+}
+
+/***** Nav *****/
+.top-bar-section ul li.active > a, 
+.top-bar-section ul li.active > a:hover {
+  background: #2BA6CB;
+  border-color: #2284A1;
+}
+
+
+/***** Body *****/
+
+.my_row { /*my row class so Foundation doesn't break*/
+  padding-top: 50px;
+}
+
+.column {
+  text-align: center;
+}
+
+
+/***** ToolTip ******/
+
+/*Foundation*/
+.has-tip {
+  color: #000000;
+  cursor: pointer; 
+}
+
+.tooltip {
+  max-width: 35%;
+  font-size: 0.65em;
+  font-weight: normal;
+}

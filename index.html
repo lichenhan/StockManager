@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<!--[if IE 9]><html class="lt-ie10" lang="en" > <![endif]-->
+<html class="no-js" lang="en" >
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Manager</title>
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="css/foundation.css">
+  <link rel="stylesheet" href="css/my_styles.css">
+
+  <!-- Generally scripts should be included at the botton right before </body> tag -->
+  <script src="js/vendor/modernizr.js"></script>
+  <script src="http://code.jquery.com/jquery-latest.min.js"
+        type="text/javascript"></script>
+  <script src="http://yui.yahooapis.com/3.16.0/build/yui/yui-min.js"></script>
+
+</head>
+<body>
+
+  <div class="fixed">
+    <!-- TODO include nav as separate file -->
+    <nav class="top-bar">
+      <ul class="title-area">
+        <!-- Title Area -->
+        <li class="name">
+          <h1><a href="#">My Stock Manager </a></h1>
+        </li>
+        <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
+        <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+      </ul>
+
+      <section class="top-bar-section">
+        <!-- Left Nav Section -->
+        <ul class="left">
+          <li class="divider"></li>
+          <li class="active"><a href="#">Stocks</a></li>
+          <li class="divider"></li>
+          <li><a href="portfolio.html">Portfolios</a></li>
+          <li class="divider"></li>
+          <li><a href="http://finance.yahoo.com" target="_blank">Yahoo Finance</a>
+          <li class="divider"></li>
+        </ul>
+
+        <!-- Right Nav Section -->
+        <ul class="right">
+          <li class="divider"></li>
+          <li class="has-form">
+            <form>
+              <div class="row collapse">
+                <div class="small-8 columns">
+                  <input type="text" placeholder="Stock Ticker">
+                </div>
+                <div class="small-4 columns">
+                  <a href="#" class="alert button">Add</a>
+                </div>
+              </div>
+            </form>
+          </li>
+        </ul>
+      </section>
+    </nav>
+  </div>
+
+  <!-- body content here -->
+  <div class="row my_row">
+    <div class="large-12 column">
+      <h4 class="subheader"> Currently Tracking </h4>
+      <table id="stock_table" class="tablesorter">
+        <thead>
+          <!-- thead will be populated by javascript -->
+        </thead>
+        <tbody>
+          <!-- data will be populated by javascript -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="row">
+    <div class="large-12 column">
+
+    </div>
+  </div>
+
+  <script src="js/vendor/jquery.js"></script>
+  <script src="js/foundation.min.js"></script>
+  <script src="js/foundation/foundation.topbar.js"></script>
+  <script src="js/foundation/foundation.tooltip.js"></script>
+  <script>
+    $(document).foundation();
+  </script>
+  <script src="js/jquery.tablesorter.min.js"></script>
+  <script src="js/my_js/base.js"></script>
+  <script src="js/my_js/stock_script.js"></script>
+</body>
+</html>
