@@ -22,7 +22,7 @@ StockManager.jsonData =
 	},
 	"#stock_table": 
 	{
-		"stocks": ["'aapl'", "'goog'", "'fb'", "'sbr'"],
+		"stocks": ["'aapl'", "'goog'", "'fb'"],
 		"fields": ["Name", "Symbol", "StockExchange", "MarketCapitalization", "PERatio", "PEGRatio", "PriceBook", "EarningsShare", "DividendShare", "DividendYield", "DividendPayDate", "LastTradePriceOnly", "Change", "PercentChange"]
 	},
 	"tooltips":
@@ -37,7 +37,7 @@ StockManager.jsonData =
 	}
 };
 
-StockManager.getQuery = function(queryKey, json, order, desc) {
+StockManager.getStocksQuery = function(queryKey, json, order, desc) {
 	var result;
 	switch (queryKey.toLowerCase()) 
 	{
@@ -46,7 +46,7 @@ StockManager.getQuery = function(queryKey, json, order, desc) {
 			if (json) {
 				var str = "select " + json.fields.join()
 					+ " from yahoo.finance.quotes"
-					+ " where symbol in (" +json.stocks.join() + ")";
+					+ " where symbol in (" + json.stocks.join() + ")";
 				if (json.fields.indexOf(order) >= 0) {
 					str += " | sort(field='" + order;
 					if (desc) {
@@ -54,6 +54,51 @@ StockManager.getQuery = function(queryKey, json, order, desc) {
 					} 
 					str += "')";
 				}
+				result = str;
+			}
+			break;
+	}
+	return result;
+}
+
+StockManager.getHistoricalDataQuery = function(queryKey, stocks) {
+
+	/* overwrite default Date's toString */
+	Date.prototype.toString = function () {
+ 
+	    var padZero = function(obj) {
+	          obj = obj + '';
+	          if (obj.length == 1)
+	              obj = "0" + obj
+	          return obj;
+	    }
+	    
+	    var output = "";
+	    output += this.getFullYear();
+	    output += "-" + padZero(this.getMonth()+1);
+	    output += "-" + padZero(this.getDate());
+    
+    	return output; 
+	}
+
+	Date.prototype.getOneYearAgo = function () {
+ 
+	    return new Date(this.getFullYear() - 1, this.getMonth(), this.getDay());
+	}
+    
+	var result;
+	switch (queryKey.toLowerCase()) 
+	{
+		case "yql":
+		default:
+			if (stocks) {
+				var today = new Date();
+				var oneYearAgo = today.getOneYearAgo();
+				var str = "select Symbol, Date, Close from yahoo.finance.historicaldata"
+					+ " where symbol in (" + stocks.join() + ")"
+					+ " and startDate = '" + oneYearAgo + "' and endDate = '" + today 
+					+ "' | sort(field='Symbol', field='Date', descending='false')";
+				
 				result = str;
 			}
 			break;
@@ -100,7 +145,7 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 	var buildTbody = function(json) {
 		if (json) {
 			var str = "";
-			var quote = json.query.results.quote;
+			var quote = json.quote;
 			/* if quote returns a single stock, we throw it into an array to simplify logic */
 			var stocks =  (quote.length) ? quote : [quote]; 
 			for (var s in stocks) {
@@ -110,6 +155,9 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 				for (var c in columns) {
 					var key = columns[c];
 					var value = (stock[key]) ? stock[key] : "N/A";
+					if (key == "DividendYield" && value != "N/A") {
+						value += "%";
+					}
 					if (key == "Change") {
 					  growth = (value >= 0) ? true : false;
 					}
@@ -122,7 +170,7 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 			}
 			$(tableId+" tbody").html(str);
 		} else {
-			console.log("empty or invalid query");
+			console.log("Empty or invalid query");
 		}
 	}
 
@@ -131,7 +179,7 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 	YUI().use('yql', function(Y) {
 
 		var q = new Y.YQLRequest(queryStr, function(r) {
-			buildTbody(r);
+			buildTbody(r.query.results);
 			$(tableId).tablesorter();
 	    }, {
 	        //Optional URL Parameters to add to the request
@@ -146,6 +194,76 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 	    q.send();
 	});
 
+}
+
+StockManager.generateCharts_usingYQL = function(queryStr, stocks) {
+
+	var buildChartDiv = function(symbol) {
+		var str = "<div class='row my_row'><div class='large-12 column'><div class='chart' id=" + symbol +"></div></div></div>";
+		$("body").append(str);
+	}
+
+	YUI().use('yql', function(Y) {
+
+		var q = new Y.YQLRequest(queryStr, function(r) {
+			var quote = r.query.results.quote;
+			var data = [];
+			var currentStock = quote[0]["Symbol"];
+			var index = 0;
+			for (var q = index; q < quote.length; q++) {
+				var symbol = quote[q]["Symbol"];
+				var symbolCutQuotations = symbol.replace("'", "");
+				if (currentStock != symbolCutQuotations || q == quote.length - 1) {
+					buildChartDiv(currentStock);
+					var currentChart = $("#" + currentStock + ".chart");
+					currentChart.highcharts("StockChart", {
+						rangeSelector : {
+							selected : 1,
+							inputEnabled: currentChart.width() > 480
+						},
+
+						title : {
+							text : currentStock.toUpperCase() + " Stock Price"
+						},
+						
+						series : [{
+							name : currentStock.toUpperCase(),
+							data : data,
+							tooltip: {
+								valueDecimals: 2
+							}
+						}]
+					});
+					currentStock = symbol;
+					index = q;
+					data = [];
+					continue;
+				}
+				var closePrice = Number(quote[q]["Close"]);
+				var dateStr = quote[q]["Date"];
+
+				var yearMonthDay = dateStr.split("-");
+				var year = Number(yearMonthDay[0]);
+                var month = Number(yearMonthDay[1]) - 1;
+                var day = Number(yearMonthDay[2]);
+
+                var dateObject = new Date(year, month, day);
+                var milliseconds = dateObject.getTime();
+
+				data.push([milliseconds, closePrice]);
+			}
+	    }, {
+	        //Optional URL Parameters to add to the request
+	        diagnostics: 'true',
+	        env: 'store://datatables.org/alltableswithkeys'
+	    }, {
+	        //Options
+	        base: '://query.yahooapis.com/v1/public/yql?',
+	        proto: 'https' //Connect using SSL
+	    });
+
+	    q.send();
+	});
 }
 
 
