@@ -1,7 +1,7 @@
 StockManager
 ============
 
-StockManager is a simple project designed to track stocks over time. StockManager is built using ZURB Foundation 5 and queries data using YQL and community Open Data tables. Data is then visualized using Highcharts and other plug-ins. All third-party code is free for non-commercial use. StockManager is published under the MIT license, which can be found within the repository.
+StockManager is a simple project designed to track stocks over time. StockManager is built using ZURB Foundation 5 and queries data using YQL and community Open Data tables. Data is then visualized using Highcharts and other plug-ins. All third-party code is free for non-commercial use. StockManager is published under the MIT license, which can be found in the repository.
 
 ###Features
 * Tabular representation of current stock quotes and corporate financials such as P/E ratios and Market Cap.
@@ -18,7 +18,7 @@ Download the zip file and run index.html in your web browser (tested only for Ch
 * Add UI features for manipulating dashboards.
 * Host to Dropbox or GitHub pages
 
-###APIs and third-party libraries
+###API's and third-party libraries
 * ZURB Foundation 5
 * YUI Library and Yahoo! Query Language
 * Open Data Tables 
