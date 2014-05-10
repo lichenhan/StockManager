@@ -1,3 +1,26 @@
+
+/***** Nav *****/
+.top-bar .name h1 a {
+  cursor: default;
+}
+
+.top-bar-section ul li.active > a, 
+.top-bar-section ul li.active > a:hover {
+  background: #2BA6CB;
+  border-color: #2284A1;
+}
+
+
+/***** Body *****/
+
+.my_row { /*my row class so Foundation doesn't break*/
+  padding-top: 50px;
+}
+
+.column {
+  text-align: center;
+}
+
 /***** Table *****/
 #stock_table {
   width: 100%;
@@ -20,24 +43,6 @@
 
 .green td{
   color: #32CD32; /* lime green */
-}
-
-/***** Nav *****/
-.top-bar-section ul li.active > a, 
-.top-bar-section ul li.active > a:hover {
-  background: #2BA6CB;
-  border-color: #2284A1;
-}
-
-
-/***** Body *****/
-
-.my_row { /*my row class so Foundation doesn't break*/
-  padding-top: 50px;
-}
-
-.column {
-  text-align: center;
 }
 
 

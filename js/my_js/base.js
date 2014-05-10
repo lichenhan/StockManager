@@ -61,7 +61,7 @@ StockManager.getStocksQuery = function(queryKey, json, order, desc) {
 	return result;
 }
 
-StockManager.getHistoricalDataQuery = function(queryKey, stocks) {
+StockManager.getHistoricalDataQuery = function(queryKey, stock) {
 
 	/* overwrite default Date's toString */
 	Date.prototype.toString = function () {
@@ -91,11 +91,11 @@ StockManager.getHistoricalDataQuery = function(queryKey, stocks) {
 	{
 		case "yql":
 		default:
-			if (stocks) {
+			if (stock) {
 				var today = new Date();
 				var oneYearAgo = today.getOneYearAgo();
 				var str = "select Symbol, Date, Close from yahoo.finance.historicaldata"
-					+ " where symbol in (" + stocks.join() + ")"
+					+ " where symbol in (" + stock + ")"
 					+ " and startDate = '" + oneYearAgo + "' and endDate = '" + today 
 					+ "' | sort(field='Symbol', field='Date', descending='false')";
 				
@@ -155,10 +155,15 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 				for (var c in columns) {
 					var key = columns[c];
 					var value = (stock[key]) ? stock[key] : "N/A";
+					if (key == "Symbol" && value != "N/A") {
+						var symbol = value.toLowerCase();
+						inner_str += "<td id='" + symbol + "_td'>" + value + "</td>";
+						continue;
+					}
 					if (key == "DividendYield" && value != "N/A") {
 						value += "%";
 					}
-					if (key == "Change") {
+					if (key == "Change" && value != "N/A") {
 					  growth = (value >= 0) ? true : false;
 					}
 					inner_str += "<td>" + value + "</td>";
@@ -196,11 +201,113 @@ StockManager.generateTable_usingYQL = function(queryStr, tableId) {
 
 }
 
-StockManager.generateCharts_usingYQL = function(queryStr, stocks) {
+StockManager.generateCharts_usingYQL = function(queryStr) {
 
-	var buildChartDiv = function(symbol) {
-		var str = "<div class='row my_row'><div class='large-12 column'><div class='chart' id=" + symbol +"></div></div></div>";
+	var buildChart = function(symbol, data) {
+		var symbolLower = symbol.toLowerCase();
+		var str = "<div id='" + symbolLower + "_row' class='row my_row'><div class='large-12 column'><div class='chart' id=" + symbol +"></div></div></div>";
 		$("body").append(str);
+		var currentChart = $("#" + symbol + ".chart");
+		currentChart.highcharts("StockChart", {
+			chart: {
+				height: 500
+			},
+
+			rangeSelector : {
+				selected : 1,
+				inputEnabled: currentChart.width() > 480
+			},
+
+			title : {
+				text : symbol + " Stock Price"
+			},
+
+			legend: {
+                enabled: true,
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'middle',
+                borderWidth: 0
+            },
+
+            yAxis: [{
+                title: {
+                    text: 'Price'
+                },
+                height: 200,
+                plotLines: [{
+                    value: 0,
+                    width: 1,
+                    color: '#808080'
+                }]
+            }, {
+                title: {
+                    text: 'MACD'
+                },
+                top: 300,
+                height: 100,
+                offset: 0,
+                lineWidth: 2
+            }],
+
+			series : [{
+				name : symbol,
+				data : data,
+				id: 'primary',
+				tooltip: {
+					valueDecimals: 2
+				}
+			}, {
+            	name: '15-day EMA',
+                linkedTo: 'primary',
+                showInLegend: true,
+                type: 'trendline',
+                algorithm: 'EMA',
+                periods: 15,
+                visible: false
+			}, {
+            	name: '45-day EMA',
+                linkedTo: 'primary',
+                showInLegend: true,
+                type: 'trendline',
+                algorithm: 'EMA',
+                periods: 45,
+                visible: false
+			}, {
+            	name: '100-day EMA',
+                linkedTo: 'primary',
+                showInLegend: true,
+                type: 'trendline',
+                algorithm: 'EMA',
+                periods: 100,
+                visible: false
+			}, {
+                name : 'MACD',
+                linkedTo: 'primary',
+                yAxis: 1,
+                showInLegend: true,
+                type: 'trendline',
+                algorithm: 'MACD'
+            }, {
+                name : 'Signal line',
+                linkedTo: 'primary',
+                yAxis: 1,
+                showInLegend: true,
+                type: 'trendline',
+                algorithm: 'signalLine'
+            }, {
+                name: 'Histogram',
+                linkedTo: 'primary',
+                yAxis: 1,
+                showInLegend: true,
+                type: 'histogram'
+            }]
+		});
+
+		var td = $("#" + symbolLower + "_td");
+		if (td.length > 0) {
+			td.html("<a href='#" + symbolLower + "_row'>" + symbol + "</a>");
+		}
 	}
 
 	YUI().use('yql', function(Y) {
@@ -208,37 +315,9 @@ StockManager.generateCharts_usingYQL = function(queryStr, stocks) {
 		var q = new Y.YQLRequest(queryStr, function(r) {
 			var quote = r.query.results.quote;
 			var data = [];
-			var currentStock = quote[0]["Symbol"];
-			var index = 0;
-			for (var q = index; q < quote.length; q++) {
-				var symbol = quote[q]["Symbol"];
-				var symbolCutQuotations = symbol.replace("'", "");
-				if (currentStock != symbolCutQuotations || q == quote.length - 1) {
-					buildChartDiv(currentStock);
-					var currentChart = $("#" + currentStock + ".chart");
-					currentChart.highcharts("StockChart", {
-						rangeSelector : {
-							selected : 1,
-							inputEnabled: currentChart.width() > 480
-						},
-
-						title : {
-							text : currentStock.toUpperCase() + " Stock Price"
-						},
-						
-						series : [{
-							name : currentStock.toUpperCase(),
-							data : data,
-							tooltip: {
-								valueDecimals: 2
-							}
-						}]
-					});
-					currentStock = symbol;
-					index = q;
-					data = [];
-					continue;
-				}
+			var symbol = quote[0]["Symbol"];
+			var symbolCutQuotations = symbol.replace("'", "");
+			for (var q in quote) {
 				var closePrice = Number(quote[q]["Close"]);
 				var dateStr = quote[q]["Date"];
 
@@ -252,6 +331,7 @@ StockManager.generateCharts_usingYQL = function(queryStr, stocks) {
 
 				data.push([milliseconds, closePrice]);
 			}
+			buildChart(symbolCutQuotations.toUpperCase(), data);
 	    }, {
 	        //Optional URL Parameters to add to the request
 	        diagnostics: 'true',

@@ -12,7 +12,12 @@ $(document).ready(function() {
 	var queryStr = StockManager.getStocksQuery("yql", json, "Symbol", false);
 	StockManager.generateTable_usingYQL(queryStr, tableId);
 
-	queryStr = StockManager.getHistoricalDataQuery("yql", json["stocks"]);
-	StockManager.generateCharts_usingYQL(queryStr, json["stocks"]);
+	//temporary measure to reduce infringing on YDN's rate limit
+	//although now we are potentially running a lot more queries
+	var stocks = json["stocks"].sort();
+	for (var s in stocks) {
+		queryStr = StockManager.getHistoricalDataQuery("yql", stocks[s]);
+		StockManager.generateCharts_usingYQL(queryStr);
+	}
 	
 });
